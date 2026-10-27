@@ -9,6 +9,7 @@ from optichain.core.entities import (
     Order,
     OrderStatus,
     Disruption,
+    DisruptionEvent,
     DisruptionType,
     SimulationConfig,
 )
@@ -21,6 +22,7 @@ __all__ = [
     "Order",
     "OrderStatus",
     "Disruption",
+    "DisruptionEvent",
     "DisruptionType",
     "SimulationConfig",
     "CostEngine",

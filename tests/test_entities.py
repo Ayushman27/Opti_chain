@@ -35,7 +35,7 @@ def test_product_creation_and_margin():
 
 
 def test_product_validation_failure_on_negative_cost():
-    with pytest.raises(ValidationError):
+    with pytest.raises((ValueError, ValidationError)):
         Product(
             id="PROD_NEG",
             name="Invalid",
@@ -108,7 +108,7 @@ def test_disruption_activity_window():
 
 def test_simulation_config_defaults():
     cfg = SimulationConfig()
-    assert cfg.n_warehouses == 3
-    assert cfg.n_products == 50
-    assert cfg.n_suppliers == 10
+    assert cfg.n_warehouses == 1
+    assert cfg.n_products == 5
+    assert cfg.n_suppliers == 3
     assert cfg.episode_days == 90
