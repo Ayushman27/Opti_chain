@@ -23,7 +23,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application source, benchmark artifacts, and test configs
 COPY optichain/ ./optichain/
 COPY docs/ ./docs/
-COPY pyproject.toml pytest.ini ./
+COPY pytest.ini ./
 
 # Create non-root user for container security
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
@@ -33,6 +33,6 @@ EXPOSE 8000
 
 # Verified health check against actual FastAPI health endpoint
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost:8000/api/v1/health || exit 1
+    CMD curl -f http://127.0.0.1:8000/api/v1/health || exit 1
 
 CMD ["uvicorn", "optichain.api.main:app", "--host", "0.0.0.0", "--port", "8000"]

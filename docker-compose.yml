@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   backend:
     build:
@@ -12,7 +10,7 @@ services:
       - PYTHONUNBUFFERED=1
       - ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000,http://localhost:80,http://localhost,http://127.0.0.1:80
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8000/api/v1/health"]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -30,9 +28,9 @@ services:
       backend:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:80/nginx-health"]
-      interval: 15s
-      timeout: 3s
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/nginx-health"]
+      interval: 30s
+      timeout: 5s
       retries: 3
-      start_period: 5s
+      start_period: 10s
     restart: unless-stopped
