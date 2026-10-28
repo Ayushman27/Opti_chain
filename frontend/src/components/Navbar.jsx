@@ -1,12 +1,22 @@
 import React from "react";
-import { Activity, Cpu, Database, Brain, Sparkles, ShieldCheck } from "lucide-react";
+import {
+  LayoutDashboard,
+  LineChart,
+  Package,
+  Cpu,
+  Activity,
+  Brain,
+  Sparkles,
+} from "lucide-react";
 
 export default function Navbar({ activeTab, setActiveTab, currentStep, episodeDays, isOnline }) {
   const tabs = [
-    { id: "simulation", label: "Digital Twin Simulator", icon: Activity },
-    { id: "benchmark", label: "Policy Benchmark Matrix", icon: Cpu },
-    { id: "forecasting", label: "Demand ML & Lead Times", icon: Database },
-    { id: "agent", label: "Agentic AI Copilot", icon: Brain },
+    { id: "overview", label: "Overview", icon: LayoutDashboard },
+    { id: "forecasting", label: "Forecasting", icon: LineChart },
+    { id: "inventory", label: "Inventory", icon: Package },
+    { id: "optimization", label: "Optimization", icon: Cpu },
+    { id: "simulation", label: "Digital Twin", icon: Activity },
+    { id: "agent", label: "AI Copilot", icon: Brain },
   ];
 
   return (
@@ -33,7 +43,7 @@ export default function Navbar({ activeTab, setActiveTab, currentStep, episodeDa
               onClick={() => setActiveTab(tab.id)}
               className={`nav-tab-btn ${isActive ? "active" : ""}`}
             >
-              <Icon size={16} />
+              <Icon size={15} />
               <span>{tab.label}</span>
             </button>
           );
@@ -41,9 +51,9 @@ export default function Navbar({ activeTab, setActiveTab, currentStep, episodeDa
       </nav>
 
       <div className="navbar-status">
-        <div className={`status-pill ${isOnline ? "online" : "standalone"}`}>
+        <div className={`status-pill ${isOnline ? "online" : "offline"}`}>
           <span className="status-dot"></span>
-          <span>{isOnline ? "API Engine Live" : "Simulator Ready"}</span>
+          <span>{isOnline ? "FastAPI Live" : "API Offline"}</span>
         </div>
         <div className="step-pill">
           <span>Day {currentStep} / {episodeDays}</span>

@@ -150,3 +150,24 @@ def chat_with_agent(req: ChatRequest):
         kpis=req.context_kpis or {},
     )
     return response
+
+
+# Mount Phase 5 API routers under /api/v1
+from optichain.api.routes import (
+    health as v1_health,
+    dashboard as v1_dashboard,
+    benchmarks as v1_benchmarks,
+    forecasts as v1_forecasts,
+    inventory as v1_inventory,
+    optimization as v1_optimization,
+    simulation as v1_simulation,
+)
+
+app.include_router(v1_health.router, prefix="/api/v1")
+app.include_router(v1_dashboard.router, prefix="/api/v1")
+app.include_router(v1_benchmarks.router, prefix="/api/v1")
+app.include_router(v1_forecasts.router, prefix="/api/v1")
+app.include_router(v1_inventory.router, prefix="/api/v1")
+app.include_router(v1_optimization.router, prefix="/api/v1")
+app.include_router(v1_simulation.router, prefix="/api/v1")
+

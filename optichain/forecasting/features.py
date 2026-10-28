@@ -32,15 +32,20 @@ class FeatureEngineer:
         T, W, P = demand_matrix.shape
         records = []
 
-        # Category mapping
+        # Clean NaN or missing values in input demand tensor
+        clean_demand = np.nan_to_num(demand_matrix, nan=0.0, posinf=0.0, neginf=0.0)
+
+        # Entity metadata mappings
         cat_map = {p.id: p.category for p in products}
         cost_map = {p.id: p.unit_cost for p in products}
+        price_map = {p.id: p.selling_price for p in products}
 
         for t in range(T):
             dow = t % 7
             is_weekend = 1 if dow in [5, 6] else 0
             sin_dow = math.sin(2.0 * math.pi * dow / 7.0)
             cos_dow = math.cos(2.0 * math.pi * dow / 7.0)
+            trend = float(t) / float(max(1, T - 1))
 
             # Check if any disruption is active today
             disr_active = 1 if any(d.is_active(t) for d in disruptions) else 0
@@ -49,14 +54,16 @@ class FeatureEngineer:
                 w_id = warehouses[w].id
                 for p in range(P):
                     p_id = products[p].id
-                    actual_demand = demand_matrix[t, w, p]
+                    actual_demand = float(clean_demand[t, w, p])
 
                     row = {
                         "step": t,
+                        "trend": trend,
                         "warehouse_id": w_id,
                         "product_id": p_id,
-                        "category": cat_map[p_id],
-                        "unit_cost": cost_map[p_id],
+                        "category": cat_map.get(p_id, "General"),
+                        "unit_cost": cost_map.get(p_id, 10.0),
+                        "selling_price": price_map.get(p_id, 20.0),
                         "day_of_week": dow,
                         "is_weekend": is_weekend,
                         "sin_dow": sin_dow,
@@ -65,24 +72,32 @@ class FeatureEngineer:
                         "demand": actual_demand,
                     }
 
-                    # Lag features
+                    # Lag features: strictly historical steps (t - lag)
                     for lag in self.lags:
                         if t - lag >= 0:
-                            row[f"lag_{lag}"] = float(demand_matrix[t - lag, w, p])
+                            row[f"lag_{lag}"] = float(clean_demand[t - lag, w, p])
                         else:
-                            row[f"lag_{lag}"] = float(demand_matrix[0, w, p])
+                            # Short series or start of horizon: use initial observation or 0.0
+                            row[f"lag_{lag}"] = float(clean_demand[0, w, p]) if T > 0 else 0.0
 
-                    # Rolling features (using historical demand prior to step t)
+                    # Rolling features: strictly prior to step t (t' < t) to prevent lookahead leakage
                     for win in self.rolling_windows:
                         start_idx = max(0, t - win)
-                        hist = demand_matrix[start_idx:t, w, p] if t > 0 else np.array([demand_matrix[0, w, p]])
+                        hist = clean_demand[start_idx:t, w, p] if t > 0 else np.array([clean_demand[0, w, p]])
                         row[f"rolling_mean_{win}"] = float(np.mean(hist))
                         row[f"rolling_std_{win}"] = float(np.std(hist)) if len(hist) > 1 else 0.0
+                        row[f"rolling_min_{win}"] = float(np.min(hist))
                         row[f"rolling_max_{win}"] = float(np.max(hist))
 
                     records.append(row)
 
         df = pd.DataFrame(records)
-        # One-hot encode category
+        # One-hot encode category and product identifiers
         df = pd.get_dummies(df, columns=["category"], drop_first=False)
+        # Also create product identifier dummy indicators
+        for p in products:
+            col_name = f"is_prod_{p.id}"
+            df[col_name] = (df["product_id"] == p.id).astype(int)
+
         return df
+

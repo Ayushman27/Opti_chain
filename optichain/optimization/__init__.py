@@ -2,6 +2,14 @@
 OptiChain AI - Operations Research & Optimization Module
 """
 
-from optichain.optimization.milp_planner import MILPReplenishmentPolicy
+from optichain.optimization.milp_planner import (
+    MILPReplenishmentPolicy,
+    MILPReplenishmentPlanner,
+    OptimizationResult,
+)
 
-__all__ = ["MILPReplenishmentPolicy"]
+__all__ = [
+    "MILPReplenishmentPolicy",
+    "MILPReplenishmentPlanner",
+    "OptimizationResult",
+]
