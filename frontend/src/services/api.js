@@ -5,9 +5,11 @@
  * No fake mock data: honest error and loading propagation.
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL !== undefined 
+const rawBaseUrl = import.meta.env.VITE_API_BASE_URL !== undefined 
   ? import.meta.env.VITE_API_BASE_URL 
   : "http://localhost:8000";
+
+const API_BASE_URL = rawBaseUrl ? rawBaseUrl.replace(/\/+$/, "") : "";
 
 /**
  * Helper to handle HTTP errors with helpful message parsing.
