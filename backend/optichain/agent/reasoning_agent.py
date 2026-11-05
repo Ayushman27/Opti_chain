@@ -140,7 +140,7 @@ class SupplyChainReasoningAgent:
                 "The total supply chain operating cost comprises:\n"
                 "- **Carrying/Holding Cost**: ~1.5% to 5% of inventory value daily depending on product category.\n"
                 "- **Stockout Penalties**: Severe negative penalties ($1.2x - 1.5x$ unit margin) representing lost customer goodwill and lost sales.\n"
-                "- **Fixed PO Setup & Transport**: $60 - $220 fixed fee per supplier purchase order plus shipping fees per unit.\n\n"
+                "- **Fixed PO Setup & Transport**: ₹60 - ₹220 fixed fee per supplier purchase order plus shipping fees per unit.\n\n"
                 "To maximize **Net Profit**, the optimal strategy is grouping purchase orders to minimize fixed setup costs while maintaining sufficient buffer to avoid catastrophic stockouts."
             )
             suggested_actions = [
@@ -156,7 +156,7 @@ class SupplyChainReasoningAgent:
                 "**Key System Metrics:**\n"
                 f"- **Fill Rate (OTIF)**: {kpis.get('fill_rate_percent', 92.4)}%\n"
                 f"- **Alpha Service Level**: {kpis.get('alpha_service_level_percent', 7.5)}%\n"
-                f"- **Net Profit**: ${kpis.get('net_profit', 3280000):,.2f}\n\n"
+                f"- **Net Profit**: ₹{kpis.get('net_profit', 3280000):,.2f}\n\n"
                 "Would you like me to simulate a specific disruption scenario, optimize replenishment parameters, or compare competing control algorithms?"
             )
             suggested_actions = [

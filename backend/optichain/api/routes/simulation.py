@@ -63,14 +63,17 @@ def run_simulation(req: SimulationRunRequest) -> SimulationRunResponse:
     run_id = f"sim_{uuid.uuid4().hex[:12]}"
     raw_history = result.get("step_history", [])
 
-    # Sample step history evenly (at most 20 points) for lightweight client transmission
+    # Provide complete daily history for accurate day-by-day scrubbing, or sample for very long runs
     step_count = len(raw_history)
-    sample_interval = max(1, step_count // 20)
-    sampled_history = [
-        raw_history[i] for i in range(0, step_count, sample_interval)
-    ]
-    if raw_history and (step_count - 1) % sample_interval != 0:
-        sampled_history.append(raw_history[-1])
+    if step_count <= 180:
+        sampled_history = raw_history
+    else:
+        sample_interval = max(1, step_count // 50)
+        sampled_history = [
+            raw_history[i] for i in range(0, step_count, sample_interval)
+        ]
+        if raw_history and (step_count - 1) % sample_interval != 0:
+            sampled_history.append(raw_history[-1])
 
     kpis_dict = result["kpis"].model_dump()
     cost_dict = result["cost_breakdown"]

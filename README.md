@@ -157,6 +157,8 @@ Access the application:
 
 #### 1. Python Backend Setup
 ```bash
+cd backend
+
 # Create and activate virtual environment
 python -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate

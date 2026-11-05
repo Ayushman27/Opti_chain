@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 # Base paths
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-DOCS_DIR = PROJECT_ROOT / "docs"
+DOCS_DIR = PROJECT_ROOT / "docs" if (PROJECT_ROOT / "docs").exists() else PROJECT_ROOT.parent / "docs"
 OPTIMIZATION_BENCHMARK_PATH = DOCS_DIR / "optimization_benchmark_results.json"
 FORECAST_BENCHMARK_PATH = DOCS_DIR / "forecast_benchmark_results.json"
 

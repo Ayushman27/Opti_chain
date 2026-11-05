@@ -27,7 +27,7 @@ export default function BenchmarkView({ benchmarkData }) {
             </div>
             <div className="podium-policy-name">{p.Policy}</div>
             <div className="podium-profit">
-              ${(p["Mean Profit ($)"] / 1000000).toFixed(2)}M
+              ₹{(p["Mean Profit ($)"] / 1000000).toFixed(2)}M
               <span className="profit-label">Net Profit</span>
             </div>
             <div className="podium-stats-row">
@@ -37,7 +37,7 @@ export default function BenchmarkView({ benchmarkData }) {
               </div>
               <div>
                 <span className="stat-sub">Total Cost</span>
-                <span className="stat-bold amber">${(p["Mean Total Cost ($)"] / 1000000).toFixed(2)}M</span>
+                <span className="stat-bold amber">₹{(p["Mean Total Cost ($)"] / 1000000).toFixed(2)}M</span>
               </div>
               <div>
                 <span className="stat-sub">Turnover</span>
@@ -58,11 +58,11 @@ export default function BenchmarkView({ benchmarkData }) {
                 <th>Policy Algorithm</th>
                 <th>Fill Rate (%)</th>
                 <th>Alpha SL (%)</th>
-                <th>Mean Total Cost</th>
-                <th>Mean Revenue</th>
-                <th>Mean Net Profit</th>
-                <th>Holding Cost</th>
-                <th>Stockout Penalty</th>
+                <th>Mean Total Cost (₹)</th>
+                <th>Mean Revenue (₹)</th>
+                <th>Mean Net Profit (₹)</th>
+                <th>Holding Cost (₹)</th>
+                <th>Stockout Penalty (₹)</th>
                 <th>Turnover</th>
               </tr>
             </thead>
@@ -75,13 +75,13 @@ export default function BenchmarkView({ benchmarkData }) {
                   </td>
                   <td className="mono cyan">{p["Fill Rate (%)"]}%</td>
                   <td className="mono">{p["Service Level (%)"]}%</td>
-                  <td className="mono amber">${Number(p["Mean Total Cost ($)"]).toLocaleString()}</td>
-                  <td className="mono">${Number(p["Mean Revenue ($)"]).toLocaleString()}</td>
+                  <td className="mono amber">₹{Number(p["Mean Total Cost ($)"]).toLocaleString()}</td>
+                  <td className="mono">₹{Number(p["Mean Revenue ($)"]).toLocaleString()}</td>
                   <td className="mono emerald profit-cell">
-                    ${Number(p["Mean Profit ($)"]).toLocaleString()}
+                    ₹{Number(p["Mean Profit ($)"]).toLocaleString()}
                   </td>
-                  <td className="mono">${Number(p["Holding Cost ($)"]).toLocaleString()}</td>
-                  <td className="mono rose">${Number(p["Stockout Cost ($)"]).toLocaleString()}</td>
+                  <td className="mono">₹{Number(p["Holding Cost ($)"]).toLocaleString()}</td>
+                  <td className="mono rose">₹{Number(p["Stockout Cost ($)"]).toLocaleString()}</td>
                   <td className="mono">{p["Inventory Turnover"]}x</td>
                 </tr>
               ))}

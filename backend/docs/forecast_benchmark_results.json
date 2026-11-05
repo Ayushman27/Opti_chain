@@ -1,0 +1,118 @@
+{
+  "configuration": {
+    "warehouses": 1,
+    "products": 5,
+    "horizon_days": 90,
+    "train_days": 63,
+    "test_days": 27,
+    "random_seed": 42
+  },
+  "overall_metrics": {
+    "Seasonal_Naive_7d": {
+      "WAPE (%)": 26.06,
+      "MAE": 5.32,
+      "RMSE": 7.0,
+      "Bias (%)": -1.89
+    },
+    "Moving_Average_7d": {
+      "WAPE (%)": 28.89,
+      "MAE": 5.9,
+      "RMSE": 7.52,
+      "Bias (%)": -0.29
+    },
+    "Ridge": {
+      "WAPE (%)": 20.62,
+      "MAE": 4.21,
+      "RMSE": 5.78,
+      "Bias (%)": -5.14
+    },
+    "LightGBM": {
+      "WAPE (%)": 22.61,
+      "MAE": 4.61,
+      "RMSE": 6.23,
+      "Bias (%)": -6.97
+    }
+  },
+  "normal_metrics": {
+    "Seasonal_Naive_7d": {
+      "WAPE (%)": 26.06,
+      "MAE": 5.32,
+      "RMSE": 7.0,
+      "Bias (%)": -1.89
+    },
+    "Moving_Average_7d": {
+      "WAPE (%)": 28.89,
+      "MAE": 5.9,
+      "RMSE": 7.52,
+      "Bias (%)": -0.29
+    },
+    "Ridge": {
+      "WAPE (%)": 20.62,
+      "MAE": 4.21,
+      "RMSE": 5.78,
+      "Bias (%)": -5.14
+    },
+    "LightGBM": {
+      "WAPE (%)": 22.61,
+      "MAE": 4.61,
+      "RMSE": 6.23,
+      "Bias (%)": -6.97
+    }
+  },
+  "disruption_metrics": {
+    "Seasonal_Naive_7d": {
+      "WAPE (%)": 25.37,
+      "MAE": 5.4,
+      "RMSE": 7.33,
+      "Bias (%)": -13.83
+    },
+    "Moving_Average_7d": {
+      "WAPE (%)": 28.99,
+      "MAE": 6.17,
+      "RMSE": 8.42,
+      "Bias (%)": -8.55
+    },
+    "Ridge": {
+      "WAPE (%)": 23.33,
+      "MAE": 4.97,
+      "RMSE": 6.84,
+      "Bias (%)": -13.14
+    },
+    "LightGBM": {
+      "WAPE (%)": 23.25,
+      "MAE": 4.95,
+      "RMSE": 6.8,
+      "Bias (%)": -6.43
+    }
+  },
+  "walk_forward_mean": [
+    {
+      "Model": "Ridge",
+      "WAPE (%)": 20.785,
+      "MAE": 4.1883333333333335,
+      "RMSE": 5.426666666666667,
+      "Bias (%)": -1.1766666666666665
+    },
+    {
+      "Model": "LightGBM",
+      "WAPE (%)": 23.486666666666668,
+      "MAE": 4.728333333333333,
+      "RMSE": 6.205000000000001,
+      "Bias (%)": -0.5816666666666668
+    },
+    {
+      "Model": "Seasonal_Naive_7d",
+      "WAPE (%)": 26.476666666666663,
+      "MAE": 5.335,
+      "RMSE": 6.786666666666666,
+      "Bias (%)": -0.7133333333333335
+    },
+    {
+      "Model": "Moving_Average_7d",
+      "WAPE (%)": 29.37833333333333,
+      "MAE": 5.919999999999999,
+      "RMSE": 7.586666666666667,
+      "Bias (%)": -0.2983333333333334
+    }
+  ]
+}

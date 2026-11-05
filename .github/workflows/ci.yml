@@ -38,16 +38,19 @@ jobs:
           sudo apt-get install -y --no-install-recommends coinor-cbc
 
       - name: Install Python dependencies
+        working-directory: ./backend
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
       - name: Run Pytest Suite with Coverage Enforcement
+        working-directory: ./backend
         run: |
           pytest --cov=optichain --cov-report=xml --cov-fail-under=85 tests
 
       - name: Optional Benchmark Execution
         if: ${{ github.event.inputs.run_benchmarks == 'true' }}
+        working-directory: ./backend
         run: |
           python scripts/audit_optimization.py
 

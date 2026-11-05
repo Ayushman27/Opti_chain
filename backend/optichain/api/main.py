@@ -19,6 +19,15 @@ from optichain.api.routes import (
     optimization,
     simulation,
 )
+from optichain.agent.reasoning_agent import SupplyChainReasoningAgent
+from pydantic import BaseModel, Field
+from typing import Any, Dict, Optional
+
+class ChatRequest(BaseModel):
+    prompt: str = Field(..., description="User query or instruction")
+    context_kpis: Optional[Dict[str, Any]] = None
+
+_reasoning_agent = SupplyChainReasoningAgent()
 
 logger = logging.getLogger("optichain.api")
 logging.basicConfig(
@@ -81,6 +90,15 @@ app.include_router(forecasts.router, prefix="/api/v1")
 app.include_router(inventory.router, prefix="/api/v1")
 app.include_router(optimization.router, prefix="/api/v1")
 app.include_router(simulation.router, prefix="/api/v1")
+
+# AI Copilot Reasoning Agent routes
+@app.post("/api/agent/chat")
+@app.post("/api/v1/agent/chat")
+def chat_with_agent(req: ChatRequest):
+    return _reasoning_agent.generate_chat_response(
+        prompt=req.prompt,
+        kpis=req.context_kpis or {},
+    )
 
 # Convenience root /health alias
 @app.get("/health", include_in_schema=False)

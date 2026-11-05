@@ -91,7 +91,7 @@ docker compose down
 ### 4.1 Backend Container
 ```bash
 # Build backend image
-docker build -t optichain-backend:latest -f Dockerfile .
+docker build -t optichain-backend:latest -f backend/Dockerfile ./backend
 
 # Run backend container
 docker run -d \

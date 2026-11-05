@@ -8,7 +8,7 @@ import {
   ShieldAlert,
   HelpCircle,
   FileText,
-  DollarSign,
+  IndianRupee,
   Package,
   Layers,
   RefreshCw,
@@ -134,8 +134,8 @@ export default function OptimizationView() {
               <thead>
                 <tr style={{ borderBottom: "1px solid var(--border-subtle)", textAlign: "left", color: "var(--text-muted)" }}>
                   <th style={{ padding: "12px 14px" }}>Policy Architecture</th>
-                  <th style={{ padding: "12px 14px" }}>Total Cost ($)</th>
-                  <th style={{ padding: "12px 14px" }}>Net Profit ($)</th>
+                  <th style={{ padding: "12px 14px" }}>Total Cost (₹)</th>
+                  <th style={{ padding: "12px 14px" }}>Net Profit (₹)</th>
                   <th style={{ padding: "12px 14px" }}>Fill Rate (%)</th>
                   <th style={{ padding: "12px 14px" }}>Service Level (%)</th>
                   <th style={{ padding: "12px 14px" }}>Stockout Units</th>
@@ -158,10 +158,10 @@ export default function OptimizationView() {
                         {p.policy} {isMILP && "⭐ (Lowest Cost)"}
                       </td>
                       <td style={{ padding: "14px", color: isMILP ? "var(--accent-cyan)" : "inherit" }} className="mono">
-                        ${p.total_cost_usd.toLocaleString()}
+                        ₹{p.total_cost_usd.toLocaleString()}
                       </td>
                       <td style={{ padding: "14px", color: "var(--accent-emerald)" }} className="mono">
-                        ${p.net_profit_usd.toLocaleString()}
+                        ₹{p.net_profit_usd.toLocaleString()}
                       </td>
                       <td style={{ padding: "14px" }} className="mono">
                         {p.fill_rate_percent}%
@@ -203,7 +203,7 @@ export default function OptimizationView() {
             <HelpCircle size={15} />
             <span>Cost vs Service Level Trade-Off Analysis</span>
           </div>
-          No single policy strictly dominates all performance dimensions. <strong>Forecast-Driven MILP</strong> achieves the lowest overall supply chain cost ($428,534.15) and highest inventory turnover (18.82x) by strictly constraining holding and setup costs. In contrast, <strong>Periodic Review (7-day)</strong> achieves higher cycle service level (94.07% vs 89.63%) by holding ~82 more units of buffer inventory (568.61 units average), which incurs $5,234.50 higher total cost.
+          No single policy strictly dominates all performance dimensions. <strong>Forecast-Driven MILP</strong> achieves the lowest overall supply chain cost (₹428,534.15) and highest inventory turnover (18.82x) by strictly constraining holding and setup costs. In contrast, <strong>Periodic Review (7-day)</strong> achieves higher cycle service level (94.07% vs 89.63%) by holding ~82 more units of buffer inventory (568.61 units average), which incurs ₹5,234.50 higher total cost.
         </div>
       </div>
 
@@ -390,7 +390,7 @@ export default function OptimizationView() {
             </div>
             <div className="glass-panel kpi-card" style={{ padding: "16px" }}>
               <span className="kpi-label">Estimated Spend</span>
-              <div className="kpi-val emerald">${optResult.total_estimated_cost_usd.toLocaleString()}</div>
+              <div className="kpi-val emerald">₹{optResult.total_estimated_cost_usd.toLocaleString()}</div>
             </div>
           </div>
 
@@ -411,7 +411,7 @@ export default function OptimizationView() {
                     <th style={{ padding: "10px 12px" }}>Supplier Source</th>
                     <th style={{ padding: "10px 12px" }}>Order Qty</th>
                     <th style={{ padding: "10px 12px" }}>Unit Price</th>
-                    <th style={{ padding: "10px 12px" }}>Line Cost ($)</th>
+                    <th style={{ padding: "10px 12px" }}>Line Cost (₹)</th>
                     <th style={{ padding: "10px 12px" }}>Lead Time</th>
                   </tr>
                 </thead>
@@ -440,10 +440,10 @@ export default function OptimizationView() {
                         {o.quantity.toLocaleString()} units
                       </td>
                       <td style={{ padding: "12px" }} className="mono">
-                        ${o.unit_cost_usd.toFixed(2)}
+                        ₹{o.unit_cost_usd.toFixed(2)}
                       </td>
                       <td style={{ padding: "12px", fontWeight: 700, color: "var(--accent-emerald)" }} className="mono">
-                        ${o.estimated_cost_usd.toLocaleString()}
+                        ₹{o.estimated_cost_usd.toLocaleString()}
                       </td>
                       <td style={{ padding: "12px", color: "var(--text-dim)" }} className="mono">
                         {o.lead_time_days} days

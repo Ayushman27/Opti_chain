@@ -235,9 +235,11 @@ class DigitalTwinSimulator:
         new_arrived_units = 0
 
         # ------------------------------------------------------------------
-        # 1. PROCESS ARRIVING DELIVERIES
+        # 1. PROCESS ARRIVING DELIVERIES (Step 6)
         # ------------------------------------------------------------------
         still_in_transit: List[Order] = []
+        arrived_shipments: List[Dict[str, Any]] = []
+
         for order in self.in_transit_orders:
             if order.expected_arrival_step <= t:
                 order.status = OrderStatus.DELIVERED
@@ -247,13 +249,46 @@ class DigitalTwinSimulator:
 
                 self.on_hand[w_i, p_i] += order.quantity
                 self.history_arrivals[t, w_i, p_i] += order.quantity
-                new_arrived_units += order.quantity
+                new_arrived_units += int(order.quantity)
+
+                prod_name = self.prod_map[order.product_id].name if order.product_id in self.prod_map else order.product_id
+                sup_name = self.sup_map[order.supplier_id].name if order.supplier_id in self.sup_map else order.supplier_id
+                arrived_shipments.append({
+                    "order_id": order.id,
+                    "product_id": order.product_id,
+                    "product_name": prod_name,
+                    "supplier_id": order.supplier_id,
+                    "supplier_name": sup_name,
+                    "warehouse_id": order.warehouse_id,
+                    "quantity": int(order.quantity),
+                })
             else:
                 still_in_transit.append(order)
         self.in_transit_orders = still_in_transit
 
         # ------------------------------------------------------------------
-        # 2. PROCESS & VALIDATE NEW REPLENISHMENT ORDERS
+        # 2. STATE SNAPSHOT & OBSERVATION (Step 7)
+        # ------------------------------------------------------------------
+        active_disruptions_today: List[Dict[str, Any]] = [
+            {
+                "type": d.type.value if hasattr(d.type, "value") else str(d.type),
+                "name": getattr(d, "name", ""),
+                "description": d.description,
+                "severity": float(getattr(d, "impact_multiplier", 1.0)),
+                "impact_multiplier": float(getattr(d, "impact_multiplier", 1.0)),
+                "target_supplier": d.target_supplier_id,
+                "target_warehouse": d.target_warehouse_id,
+                "target_product": d.target_product_id,
+            }
+            for d in self.disruptions
+            if d.is_active(t)
+        ]
+        pipeline_before_orders = sum(o.quantity for o in self.in_transit_orders if o.status == OrderStatus.IN_TRANSIT)
+        on_hand_before_demand = float(np.sum(self.on_hand))
+        effective_inv_before = on_hand_before_demand + pipeline_before_orders - float(np.sum(self.backlog))
+
+        # ------------------------------------------------------------------
+        # 3. PROCESS & VALIDATE NEW REPLENISHMENT ORDERS (Steps 8, 9, 10)
         # ------------------------------------------------------------------
         step_fixed_order_cost = 0.0
         step_procurement_cost = 0.0
@@ -261,12 +296,28 @@ class DigitalTwinSimulator:
         suppliers_ordered_from = set()
         supplier_dispatched_today: Dict[Tuple[str, str], int] = {}
 
+        policy_requested_orders: List[Dict[str, Any]] = []
+        placed_orders_detail: List[Dict[str, Any]] = []
+        rejected_orders_detail: List[Dict[str, Any]] = []
+
         for (w_id, p_id, s_id), requested_qty in replenishment_orders.items():
             if requested_qty <= 0:
                 continue
 
+            policy_requested_orders.append({
+                "warehouse_id": w_id,
+                "product_id": p_id,
+                "supplier_id": s_id,
+                "requested_qty": int(requested_qty),
+            })
+
             # Ensure valid entity references
             if w_id not in self.wh_map or p_id not in self.prod_map or s_id not in self.sup_map:
+                rejected_orders_detail.append({
+                    "product_id": p_id,
+                    "supplier_id": s_id,
+                    "reason": "Invalid entity reference (warehouse, product, or supplier not found)",
+                })
                 continue
 
             supplier = self.sup_map[s_id]
@@ -275,7 +326,13 @@ class DigitalTwinSimulator:
 
             # Rule 1: Supplier Catalog Eligibility Check
             if p_id not in supplier.catalog:
-                # Supplier does not produce or offer this SKU
+                rejected_orders_detail.append({
+                    "product_id": p_id,
+                    "product_name": product.name,
+                    "supplier_id": s_id,
+                    "supplier_name": supplier.name,
+                    "reason": f"SKU {product.name} ({p_id}) is not offered in {supplier.name} catalog",
+                })
                 continue
 
             unit_price = supplier.catalog[p_id]
@@ -283,6 +340,7 @@ class DigitalTwinSimulator:
             # Rule 2: Minimum Order Quantity (MOQ) Enforcement
             moq = supplier.min_order_quantity.get(p_id, 1)
             ordered_qty = max(requested_qty, moq)
+            moq_applied = ordered_qty > requested_qty
 
             # Rule 3: Supplier Daily Production Capacity Check
             daily_cap = supplier.daily_capacity.get(p_id, 999999)
@@ -290,6 +348,13 @@ class DigitalTwinSimulator:
             remaining_cap = max(0, daily_cap - already_dispatched)
 
             if remaining_cap <= 0:
+                rejected_orders_detail.append({
+                    "product_id": p_id,
+                    "product_name": product.name,
+                    "supplier_id": s_id,
+                    "supplier_name": supplier.name,
+                    "reason": f"Supplier {supplier.name} daily production capacity limit ({daily_cap}) fully exhausted",
+                })
                 continue
 
             ordered_qty = min(ordered_qty, remaining_cap)
@@ -313,8 +378,9 @@ class DigitalTwinSimulator:
                 suppliers_ordered_from.add(s_id)
 
             self.order_counter += 1
+            order_id = f"ORD_{t:03d}_{self.order_counter:04d}"
             order = Order(
-                id=f"ORD_{t:03d}_{self.order_counter:04d}",
+                id=order_id,
                 step_created=t,
                 supplier_id=s_id,
                 warehouse_id=w_id,
@@ -329,8 +395,26 @@ class DigitalTwinSimulator:
             self.in_transit_orders.append(order)
             self.all_orders_history.append(order)
 
+            placed_orders_detail.append({
+                "order_id": order_id,
+                "supplier_id": s_id,
+                "supplier_name": supplier.name,
+                "warehouse_id": w_id,
+                "product_id": p_id,
+                "product_name": product.name,
+                "requested_qty": int(requested_qty),
+                "final_qty": int(ordered_qty),
+                "moq": int(moq),
+                "moq_applied": bool(moq_applied),
+                "daily_capacity": int(daily_cap),
+                "lead_time_days": int(lead_time),
+                "expected_arrival_day": int(arrival_step),
+                "unit_cost": round(float(unit_price), 2),
+                "line_procurement_cost": round(float(proc_cost), 2),
+            })
+
         # ------------------------------------------------------------------
-        # 3. CUSTOMER DEMAND REALIZATION & FULFILLMENT
+        # 4. CUSTOMER DEMAND REALIZATION & FULFILLMENT (Step 11)
         # ------------------------------------------------------------------
         step_demand_total = 0
         step_fulfilled_total = 0
@@ -339,6 +423,7 @@ class DigitalTwinSimulator:
         step_stockout_penalty = 0.0
         step_revenue = 0.0
         step_cogs = 0.0
+        sku_breakdown: List[Dict[str, Any]] = []
 
         for w_i, warehouse in enumerate(self.warehouses):
             for p_i, product in enumerate(self.products):
@@ -376,11 +461,24 @@ class DigitalTwinSimulator:
                 step_holding_cost += self.on_hand[w_i, p_i] * product.holding_cost_rate
                 step_stockout_penalty += unmet * product.stockout_penalty
 
+                sku_breakdown.append({
+                    "product_id": product.id,
+                    "product_name": product.name,
+                    "category": product.category,
+                    "demand": int(customer_demand),
+                    "fulfilled": int(fulfilled),
+                    "unmet": int(unmet),
+                    "stockout": unmet > 0,
+                    "ending_on_hand": int(round(self.on_hand[w_i, p_i])),
+                    "unit_cost": round(float(product.unit_cost), 2),
+                    "selling_price": round(float(product.selling_price), 2),
+                })
+
         # Warehouse fixed facility operating costs
         step_operating_cost = sum(w.daily_fixed_cost for w in self.warehouses)
 
         # ------------------------------------------------------------------
-        # 4. FINANCIAL ACCOUNTING & TELEMETRY
+        # 5. FINANCIAL ACCOUNTING & TELEMETRY (Steps 12 & 13)
         # ------------------------------------------------------------------
         cost_breakdown = self.cost_engine.record_step_cost(
             step=t,
@@ -403,11 +501,13 @@ class DigitalTwinSimulator:
         )
 
         # Record pipeline snapshot in tensor
+        pipeline_units_now = 0.0
         for o in self.in_transit_orders:
             if o.status == OrderStatus.IN_TRANSIT:
                 w_idx = self.wh_idx[o.warehouse_id]
                 p_idx = self.prod_idx[o.product_id]
                 self.history_pipeline[t, w_idx, p_idx] += o.quantity
+                pipeline_units_now += o.quantity
 
         self.metrics_tracker.record_step(
             demand=step_demand_total,
@@ -417,6 +517,143 @@ class DigitalTwinSimulator:
             on_hand_value=total_inventory_val,
             cogs=step_cogs,
         )
+
+        # Build detailed 8-step execution lifecycle matching Section 3.1 mechanics
+        daily_execution_steps: List[Dict[str, Any]] = [
+            {
+                "step_num": 6,
+                "title": "Inbound Shipment Arrival",
+                "tag": "Arrivals",
+                "status": "success" if arrived_shipments else "neutral",
+                "summary": (
+                    f"Received {len(arrived_shipments)} shipment(s) delivering {new_arrived_units:,} physical units into warehouse stock."
+                    if arrived_shipments
+                    else "No inbound shipments scheduled for delivery today."
+                ),
+                "items": arrived_shipments,
+            },
+            {
+                "step_num": 7,
+                "title": "Network State Observation",
+                "tag": "Observation",
+                "status": "warning" if active_disruptions_today else "info",
+                "summary": (
+                    f"On-Hand: {int(on_hand_before_demand):,} units | Pipeline: {int(pipeline_before_orders):,} units | "
+                    f"Effective IP: {int(effective_inv_before):,} units | Disruptions: {len(active_disruptions_today)} active."
+                ),
+                "data": {
+                    "on_hand": int(on_hand_before_demand),
+                    "pipeline": int(pipeline_before_orders),
+                    "effective_inventory": int(effective_inv_before),
+                    "disruptions": active_disruptions_today,
+                },
+            },
+            {
+                "step_num": 8,
+                "title": "Inventory Policy Decision",
+                "tag": "Replenishment",
+                "status": "info" if policy_requested_orders else "neutral",
+                "summary": (
+                    f"Inventory policy evaluated state and submitted {len(policy_requested_orders)} replenishment order request(s)."
+                    if policy_requested_orders
+                    else "Effective inventory position is above reorder thresholds; policy requested 0 orders today."
+                ),
+                "items": policy_requested_orders,
+            },
+            {
+                "step_num": 9,
+                "title": "Supplier Eligibility & MOQ Validation",
+                "tag": "Constraints",
+                "status": (
+                    "warning"
+                    if any(o["moq_applied"] for o in placed_orders_detail) or rejected_orders_detail
+                    else "success"
+                    if placed_orders_detail
+                    else "neutral"
+                ),
+                "summary": (
+                    f"Validated {len(placed_orders_detail)} order(s). "
+                    + (
+                        f"MOQ constraints elevated {sum(1 for o in placed_orders_detail if o['moq_applied'])} order(s). "
+                        if any(o["moq_applied"] for o in placed_orders_detail)
+                        else "All order quantities satisfied MOQ and daily capacity constraints. "
+                    )
+                    + (f"{len(rejected_orders_detail)} rejected." if rejected_orders_detail else "")
+                ),
+                "placed": placed_orders_detail,
+                "rejected": rejected_orders_detail,
+            },
+            {
+                "step_num": 10,
+                "title": "Stochastic Lead Time & Pipeline Scheduling",
+                "tag": "Lead Time",
+                "status": "info" if placed_orders_detail else "neutral",
+                "summary": (
+                    f"Scheduled {len(placed_orders_detail)} accepted purchase order(s) for future arrival (enforcing physical lead time L >= 1 day)."
+                    if placed_orders_detail
+                    else "No new purchase orders added to in-transit pipeline today."
+                ),
+                "items": [
+                    {
+                        "order_id": o["order_id"],
+                        "sku": o["product_name"],
+                        "supplier": o["supplier_name"],
+                        "quantity": o["final_qty"],
+                        "lead_time": f"{o['lead_time_days']} day(s)",
+                        "arrival_day": f"Day {o['expected_arrival_day']}",
+                    }
+                    for o in placed_orders_detail
+                ],
+            },
+            {
+                "step_num": 11,
+                "title": "Customer Demand Realization & Fulfillment",
+                "tag": "Fulfillment",
+                "status": "error" if step_unmet_total > 0 else "success",
+                "summary": (
+                    f"Realized demand: {step_demand_total:,} units. Fulfilled {step_fulfilled_total:,} units ({step_unmet_total:,} unmet stockout units)."
+                    if step_demand_total > 0
+                    else "Zero customer demand realized today."
+                ),
+                "sku_breakdown": sku_breakdown,
+            },
+            {
+                "step_num": 12,
+                "title": "Daily Economic Balance Sheet",
+                "tag": "Financials",
+                "status": "success" if cost_breakdown.net_profit >= 0 else "warning",
+                "summary": (
+                    f"Daily Revenue: ₹{step_revenue:,.2f} | Total Costs: ₹{cost_breakdown.total_cost:,.2f} | "
+                    f"Net Daily Profit: ₹{cost_breakdown.net_profit:,.2f}."
+                ),
+                "breakdown": {
+                    "holding_cost": round(step_holding_cost, 2),
+                    "stockout_penalty": round(step_stockout_penalty, 2),
+                    "fixed_order_cost": round(step_fixed_order_cost, 2),
+                    "procurement_cost": round(step_procurement_cost, 2),
+                    "transport_cost": round(step_transport_cost, 2),
+                    "operating_cost": round(step_operating_cost, 2),
+                    "revenue": round(step_revenue, 2),
+                    "net_profit": round(cost_breakdown.net_profit, 2),
+                },
+            },
+            {
+                "step_num": 13,
+                "title": "Telemetry & Multi-Dimensional Ledger",
+                "tag": "Telemetry",
+                "status": "info",
+                "summary": (
+                    f"Ending On-Hand Stock: {int(total_inventory_units):,} units (₹{total_inventory_val:,.2f} asset value) | "
+                    f"Daily Fill Rate: {(round(step_fulfilled_total / step_demand_total * 100, 1) if step_demand_total > 0 else 100.0)}%."
+                ),
+                "data": {
+                    "ending_on_hand_units": round(total_inventory_units, 1),
+                    "ending_on_hand_val": round(total_inventory_val, 2),
+                    "pipeline_units": round(pipeline_units_now, 1),
+                    "fill_rate": round(step_fulfilled_total / step_demand_total * 100, 2) if step_demand_total > 0 else 100.0,
+                },
+            },
+        ]
 
         step_info = {
             "step": t,
@@ -434,6 +671,20 @@ class DigitalTwinSimulator:
             "on_hand_units": round(total_inventory_units, 1),
             "arrived_units": new_arrived_units,
             "orders_placed_count": len(replenishment_orders),
+            "active_disruptions": active_disruptions_today,
+            "arrived_shipments": arrived_shipments,
+            "placed_orders": placed_orders_detail,
+            "rejected_orders": rejected_orders_detail,
+            "sku_breakdown": sku_breakdown,
+            "execution_steps": daily_execution_steps,
+            "cost_breakdown_detail": {
+                "holding": round(step_holding_cost, 2),
+                "stockout": round(step_stockout_penalty, 2),
+                "fixed_order": round(step_fixed_order_cost, 2),
+                "procurement": round(step_procurement_cost, 2),
+                "transport": round(step_transport_cost, 2),
+                "operating": round(step_operating_cost, 2),
+            },
         }
         self.step_history.append(step_info)
 

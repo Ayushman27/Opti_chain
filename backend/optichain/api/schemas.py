@@ -86,7 +86,7 @@ class BenchmarksResponse(BaseModel):
     provenance: str = Field(..., description="Data origin and seed documentation")
     units: Dict[str, str] = Field(
         default={
-            "costs": "USD ($)",
+            "costs": "INR (₹)",
             "percentages": "Percent (%) - absolute points",
             "inventory": "Physical units",
             "turnover": "Ratio (Cost of Goods Sold / Average Inventory)",

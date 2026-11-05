@@ -8,9 +8,10 @@ import KpiMetricsGrid from "./components/KpiMetricsGrid";
 import SimulationControls from "./components/SimulationControls";
 import NetworkVisualizer from "./components/NetworkVisualizer";
 import InventoryChart from "./components/InventoryChart";
+import DailyStepInspector from "./components/DailyStepInspector";
 import AgentChat from "./components/AgentChat";
 import { fetchHealth, executeSimulation } from "./services/api";
-import { AlertCircle, RefreshCw } from "lucide-react";
+import { AlertCircle, RefreshCw, PlayCircle } from "lucide-react";
 import "./App.css";
 
 export default function App() {
@@ -25,6 +26,7 @@ export default function App() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [speed, setSpeed] = useState(1);
   const [simLoading, setSimLoading] = useState(false);
+  const [simError, setSimError] = useState(null);
   const [simData, setSimData] = useState(null);
 
   const timerRef = useRef(null);
@@ -51,7 +53,7 @@ export default function App() {
   // Run simulation when simulation tab is active or requested
   const handleRunSimulation = async (selectedPolicy) => {
     setSimLoading(true);
-    setIsPlaying(false);
+    setSimError(null);
     setCurrentStep(0);
     try {
       const res = await executeSimulation({
@@ -65,10 +67,18 @@ export default function App() {
       setSimData(res);
     } catch (err) {
       console.error("Simulation run error:", err);
+      setSimError(err.message || "Failed to execute simulation run.");
     } finally {
       setSimLoading(false);
     }
   };
+
+  // Automatically execute simulation upon navigating to Simulation tab if no data is loaded
+  useEffect(() => {
+    if (activeTab === "simulation" && !simData && !simLoading) {
+      handleRunSimulation(policy);
+    }
+  }, [activeTab]);
 
   // Playback timer for simulation step scrubber
   useEffect(() => {
@@ -172,7 +182,7 @@ export default function App() {
               setPolicy={setPolicy}
               currentStep={currentStep}
               setCurrentStep={setCurrentStep}
-              maxSteps={simData?.step_history_sample?.length || 20}
+              maxSteps={simData?.total_steps || simData?.step_history_sample?.length || 90}
               isPlaying={isPlaying}
               setIsPlaying={setIsPlaying}
               speed={speed}
@@ -180,7 +190,39 @@ export default function App() {
               onReset={handleReset}
               onRunSimulation={handleRunSimulation}
               loading={simLoading}
+              hasData={!!simData}
             />
+
+            {simLoading && (
+              <div className="glass-panel state-card" style={{ marginTop: "20px", display: "flex", alignItems: "center", justifyContent: "center", gap: "16px", padding: "40px" }}>
+                <RefreshCw size={24} className="spin text-cyan" />
+                <div>
+                  <h4 style={{ color: "#fff", margin: "0 0 4px 0" }}>Executing 90-Day Digital Twin Simulation</h4>
+                  <p style={{ color: "var(--text-muted)", margin: 0, fontSize: "13px" }}>
+                    Simulating stochastic lead-times, customer demand, disruptions, and cost accounting under policy...
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {simError && !simLoading && (
+              <div className="glass-panel state-card" style={{ marginTop: "20px", borderLeft: "3px solid var(--accent-rose)", padding: "20px" }}>
+                <div style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}>
+                  <AlertCircle size={20} className="text-rose" style={{ flexShrink: 0, marginTop: "2px" }} />
+                  <div>
+                    <h4 style={{ color: "#fff", margin: "0 0 6px 0" }}>Simulation Execution Failed</h4>
+                    <p style={{ color: "var(--accent-rose)", margin: "0 0 12px 0", fontSize: "13px" }}>{simError}</p>
+                    <button
+                      onClick={() => handleRunSimulation(policy)}
+                      className="btn-primary-action"
+                      style={{ padding: "6px 16px", fontSize: "12px", display: "inline-flex", alignItems: "center", gap: "6px" }}
+                    >
+                      <RefreshCw size={14} /> Retry Simulation
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {simData && (
               <>
@@ -189,9 +231,16 @@ export default function App() {
                   costBreakdown={simData.cost_breakdown}
                 />
 
+                <DailyStepInspector
+                  currentStepData={currentStepData}
+                  currentStep={currentStep}
+                  totalSteps={simData?.total_steps || simData?.step_history_sample?.length || 90}
+                  policyName={simData?.policy_name || policy}
+                />
+
                 <NetworkVisualizer
                   currentStep={currentStep}
-                  activeDisruptions={[]}
+                  activeDisruptions={currentStepData.active_disruptions || []}
                   onHandUnits={currentStepData.on_hand_units || 2800}
                 />
 
@@ -202,9 +251,19 @@ export default function App() {
               </>
             )}
 
-            {!simData && !simLoading && (
-              <div className="glass-panel state-card" style={{ marginTop: "20px" }}>
-                <p>Click "Run Episode" above to execute a fresh digital twin simulation run.</p>
+            {!simData && !simLoading && !simError && (
+              <div className="glass-panel state-card" style={{ marginTop: "20px", textAlign: "center", padding: "40px" }}>
+                <h4 style={{ color: "#fff", marginBottom: "8px" }}>Digital Twin Simulation Ready</h4>
+                <p style={{ color: "var(--text-muted)", marginBottom: "16px", fontSize: "13px" }}>
+                  Click below to execute a 90-day simulation episode and inspect the discrete daily mechanics.
+                </p>
+                <button
+                  onClick={() => handleRunSimulation(policy)}
+                  className="btn-primary-action"
+                  style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "10px 24px", fontSize: "14px", fontWeight: "600" }}
+                >
+                  <PlayCircle size={18} /> Execute 90-Day Simulation
+                </button>
               </div>
             )}
           </div>

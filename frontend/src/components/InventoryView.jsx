@@ -176,7 +176,7 @@ export default function InventoryView() {
                     <td style={{ padding: "14px", fontWeight: 700 }}>
                       <div style={{ color: "#fff" }}>{p.product_name}</div>
                       <div className="mono" style={{ fontSize: "11px", color: "var(--text-dim)" }}>
-                        {p.product_id} (${p.unit_cost.toFixed(2)} cost)
+                        {p.product_id} (₹{p.unit_cost.toFixed(2)} cost)
                       </div>
                     </td>
                     <td style={{ padding: "14px", color: "var(--text-muted)" }}>{p.category}</td>

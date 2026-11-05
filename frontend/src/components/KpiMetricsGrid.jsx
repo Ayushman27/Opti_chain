@@ -1,5 +1,5 @@
 import React from "react";
-import { TrendingUp, DollarSign, PackageCheck, AlertOctagon } from "lucide-react";
+import { TrendingUp, IndianRupee, PackageCheck, AlertOctagon } from "lucide-react";
 
 export default function KpiMetricsGrid({ kpis, costBreakdown }) {
   const fillRate = kpis?.fill_rate_percent ?? 92.4;
@@ -43,7 +43,7 @@ export default function KpiMetricsGrid({ kpis, costBreakdown }) {
           </div>
         </div>
         <div className="kpi-value emerald">
-          ${(netProfit / 1000000).toFixed(2)}M
+          ₹{(netProfit / 1000000).toFixed(2)}M
         </div>
         <div className="kpi-subtitle">
           Margin: {totalCost > 0 ? ((netProfit / (netProfit + totalCost)) * 100).toFixed(1) : 0}% of revenue
@@ -59,16 +59,16 @@ export default function KpiMetricsGrid({ kpis, costBreakdown }) {
         <div className="kpi-card-header">
           <span className="kpi-title">Total Operational Cost</span>
           <div className="kpi-icon-badge amber">
-            <DollarSign size={18} />
+            <IndianRupee size={18} />
           </div>
         </div>
         <div className="kpi-value amber">
-          ${(totalCost / 1000000).toFixed(2)}M
+          ₹{(totalCost / 1000000).toFixed(2)}M
         </div>
         <div className="kpi-sub-breakdown">
-          <span>Holding: ${(holdingCost / 1000).toFixed(0)}k</span>
+          <span>Holding: ₹{(holdingCost / 1000).toFixed(0)}k</span>
           <span>•</span>
-          <span>Stockout: ${(stockoutPenalty / 1000).toFixed(0)}k</span>
+          <span>Stockout: ₹{(stockoutPenalty / 1000).toFixed(0)}k</span>
         </div>
         <div className="kpi-footer">
           <span>Holding/Penalty Ratio</span>

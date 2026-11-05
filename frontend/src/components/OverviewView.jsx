@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
-  DollarSign,
+  IndianRupee,
   TrendingUp,
   Percent,
   CheckCircle2,
@@ -103,9 +103,9 @@ export default function OverviewView() {
         <div className="glass-panel kpi-card">
           <div className="kpi-header">
             <span className="kpi-label">Total Supply Chain Cost</span>
-            <DollarSign size={18} className="kpi-icon cyan" />
+            <IndianRupee size={18} className="kpi-icon cyan" />
           </div>
-          <div className="kpi-val cyan">${summary.total_cost.toLocaleString()}</div>
+          <div className="kpi-val cyan">₹{summary.total_cost.toLocaleString()}</div>
           <div className="kpi-subtext">
             <span>vs ROP Baseline savings: </span>
             <span className="kpi-badge positive">-{summary.cost_savings_vs_rop_percent}%</span>
@@ -117,7 +117,7 @@ export default function OverviewView() {
             <span className="kpi-label">Net Operating Profit</span>
             <TrendingUp size={18} className="kpi-icon emerald" />
           </div>
-          <div className="kpi-val emerald">${summary.net_profit.toLocaleString()}</div>
+          <div className="kpi-val emerald">₹{summary.net_profit.toLocaleString()}</div>
           <div className="kpi-subtext">
             <span>Profit uplift vs ROP: </span>
             <span className="kpi-badge positive">+{summary.net_profit_uplift_percent}%</span>
@@ -193,7 +193,7 @@ export default function OverviewView() {
                       {p.policy} {isMILP && "🏆"}
                     </span>
                     <span className="mono" style={{ fontSize: "12px", color: "var(--accent-emerald)" }}>
-                      Profit: ${p.net_profit_usd.toLocaleString()}
+                      Profit: ₹{p.net_profit_usd.toLocaleString()}
                     </span>
                   </div>
 
@@ -203,7 +203,7 @@ export default function OverviewView() {
                     <div style={{ flex: 1, height: "8px", background: "rgba(255, 255, 255, 0.08)", borderRadius: "4px", overflow: "hidden" }}>
                       <div style={{ width: `${costPct}%`, height: "100%", background: isMILP ? "var(--accent-cyan)" : "var(--accent-rose)", borderRadius: "4px" }} />
                     </div>
-                    <span className="mono" style={{ width: "75px", textAlign: "right" }}>${p.total_cost_usd.toLocaleString()}</span>
+                    <span className="mono" style={{ width: "75px", textAlign: "right" }}>₹{p.total_cost_usd.toLocaleString()}</span>
                   </div>
 
                   {/* Profit Bar */}
@@ -212,7 +212,7 @@ export default function OverviewView() {
                     <div style={{ flex: 1, height: "8px", background: "rgba(255, 255, 255, 0.08)", borderRadius: "4px", overflow: "hidden" }}>
                       <div style={{ width: `${profitPct}%`, height: "100%", background: "var(--accent-emerald)", borderRadius: "4px" }} />
                     </div>
-                    <span className="mono" style={{ width: "75px", textAlign: "right" }}>${p.net_profit_usd.toLocaleString()}</span>
+                    <span className="mono" style={{ width: "75px", textAlign: "right" }}>₹{p.net_profit_usd.toLocaleString()}</span>
                   </div>
                 </div>
               );

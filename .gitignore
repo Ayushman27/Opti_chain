@@ -37,6 +37,7 @@ htmlcov/
 data/raw/
 data/processed/
 artifacts/
+backend/artifacts/
 
 # Frontend
 frontend/node_modules/
